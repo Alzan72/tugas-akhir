@@ -111,6 +111,7 @@ function App() {
   return (
     <>
       <div className="container">
+        <div className="row text-center"><h2>Daftar perizinan santri</h2></div>
         <Button color="danger" onClick={()=>{ toggle()
            clearState() }}>
           Tambah data
