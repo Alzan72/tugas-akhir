@@ -11,43 +11,46 @@ import {
   FormText,
   Modal, ModalHeader, ModalBody, ModalFooter
 } from "reactstrap";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
+import firebase from './firebase.js';
+import { getDatabase, ref, set } from "firebase/database";
 
 
 let siswa = [
-  {
-    id: "12",
-    nama: "Tia",
-    jk: "P",
-    alasan: 'sakit',
-    alamat: "Samarinda",
-    waktu_pulang: "Senin 2 April 2022",
-    waktu_kembali: "Senin 2 April 2022",
-    teman_pulang: 'Orang tua',
-    button: "",
-  },
-  {
-    id: "23",
-    nama: "Tina",
-    jk: "P",
-    alasan: 'sakit',
-    alamat: "Samarinda",
-    waktu_pulang: "Senin 2 April 2022",
-    waktu_kembali: "Senin 2 April 2022",
-    teman_pulang: 'Orang tua',
-    button: "",
-  },
-  {
-    id: "32",
-    nama: "Tegar",
-    jk: "L",
-    alasan: 'sakit',
-    alamat: "Samarinda",
-    waktu_pulang: "Senin 2 April 2022",
-    waktu_kembali: "Senin 2 April 2022",
-    teman_pulang: 'Orang tua',
-    button: "",
-  },
+  // {
+  //   id: "12",
+  //   nama: "Tia",
+  //   jk: "P",
+  //   alasan: 'sakit',
+  //   alamat: "Samarinda",
+  //   waktu_pulang: "Senin 2 April 2022",
+  //   waktu_kembali: "Senin 2 April 2022",
+  //   teman_pulang: 'Orang tua',
+  //   button: "",
+  // },
+  // {
+  //   id: "23",
+  //   nama: "Tina",
+  //   jk: "P",
+  //   alasan: 'sakit',
+  //   alamat: "Samarinda",
+  //   waktu_pulang: "Senin 2 April 2022",
+  //   waktu_kembali: "Senin 2 April 2022",
+  //   teman_pulang: 'Orang tua',
+  //   button: "",
+  // },
+  // {
+  //   id: "32",
+  //   nama: "Tegar",
+  //   jk: "L",
+  //   alasan: 'sakit',
+  //   alamat: "Samarinda",
+  //   waktu_pulang: "Senin 2 April 2022",
+  //   waktu_kembali: "Senin 2 April 2022",
+  //   teman_pulang: 'Orang tua',
+  //   button: "",
+  // },
 ];
 
 function App() {
@@ -80,15 +83,27 @@ function App() {
     });
   }
 
-   let deleteButton = (data) => {
-     let newData = siswa.filter((siswa) => siswa.id !== data);
-     siswa = newData;
-     clearState();
+   let deleteButton = async (data) => {
+    let url =
+      "https://data-barang-d4966-default-rtdb.asia-southeast1.firebasedatabase.app/siswa/"+ data +".json";
+     try {
+       let response = await fetch(url,{
+        method: 'DELETE'
+       });
+       //   alert("Data berhasil dikirim");
+       if (!response.ok) {
+         throw new Error(response.status);
+       }
+       let responseData = await response.json();
+       console.log(responseData);
+     } catch (error) {
+       console.log(`Terjadigangguandenganpesan:"${error}"`);
+     }
    };
 
   let editButton = (data) => {
     let newData = siswa.filter((i) => i.id === data);
-    console.log( newData[0].id);
+    console.log( newData[0].button);
     return setListsiswa({
       id:newData[0].id,
       nama: newData[0].nama,
@@ -108,6 +123,42 @@ function App() {
   const [modal, setModal] = useState(false);
 
   const toggle = () => setModal(!modal);
+
+const [siswa, setSiswa] = useState([]);
+  // render firebase
+  useEffect(() => {
+    let url =
+      "https://data-barang-d4966-default-rtdb.asia-southeast1.firebasedatabase.app/siswa.json";
+    const read = async () => {
+      try {
+        let response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(response.status);
+        }
+        let responseData = await response.json()
+        let newSiswa = [];
+        for (let key in responseData) {
+          newSiswa.push({
+            id: key,
+            nama: responseData[key].nama,
+            alamat: responseData[key].alamat,
+            teman_pulang: responseData[key].teman_pulang,
+            alasan: responseData[key].alasan,
+            waktu_pulang: responseData[key].waktu_pulang,
+            waktu_kembali: responseData[key].waktu_kembali,
+            jk: responseData[key].jk,
+            button: "",
+          });
+        }
+        setSiswa(newSiswa);
+        console.log(siswa);
+      } catch (error) {
+        console.log(`Terjadi gangguan dengan pesan: "${error}"`);
+      }
+    };
+
+    read();
+  }, []);
   return (
     <>
       <div className="container">
@@ -243,26 +294,68 @@ function App() {
                   const newListSiswa = { ...listsiswa };
                   newListSiswa.waktu_kembali = a.target.value;
                   setListsiswa(newListSiswa);
-
                 }}
-
                 />
               </FormGroup>
               <Button
                 onClick={() => {
                   if (listsiswa.button == "ubah") {
-                    let data = siswa.findIndex((a) => a.id === listsiswa.id);
-                    console.log(data);
-                    siswa.splice(data, 1, listsiswa);
+                    console.log(listsiswa);
+                    const update = async () => {
+                      let url =
+                        "https://data-barang-d4966-default-rtdb.asia-southeast1.firebasedatabase.app/siswa/"+listsiswa.id +".json";
+                      try {
+                        let response = await fetch(url, {
+                          method: "PATCH",
+                          body: JSON.stringify({
+                            nama: listsiswa.nama,
+                            alamat: listsiswa.alamat,
+                            jk: listsiswa.jk,
+                            alasan: listsiswa.alasan,
+                            waktu_pulang: listsiswa.waktu_pulang,
+                            waktu_kembali: listsiswa.waktu_kembali,
+                            teman_pulang: listsiswa.teman_pulang,
+                            button: "",
+                          }),
+                        });
+                        alert("Data berhasil update");
+                        if (!response.ok) {
+                          throw new Error(response.status);
+                        }
+                        let responseData = await response.json();
+                        console.log(responseData);
+                      } catch (error) {
+                        console.log(`Terjadigangguandenganpesan:"${error}"`);
+                      }
+                    };
+                    update();
                     clearState();
                   } else {
                       const newListSiswa = { ...listsiswa };
-                      newListSiswa.id = Math.floor(Math.random() * 10);
                       const siswaBaru = newListSiswa;
                       if (siswaBaru.nama.trim() === "") {
                         alert("Nama harus diisi");
                       } else {
                         siswa.push(siswaBaru);
+                        const myFetch = async () => {
+                           let url =
+                             "https://data-barang-d4966-default-rtdb.asia-southeast1.firebasedatabase.app/siswa.json";  
+                          try {
+                            let response = await fetch(url, {
+                              method: "POST",
+                              body: JSON.stringify(siswaBaru),
+                            });
+                            alert("Data berhasil dikirim");
+                            if (!response.ok) {
+                              throw new Error(response.status);
+                            }
+                          } catch (error) {
+                            console.log(
+                              `Terjadi gangguan dengan pesan:"${error}"`
+                            );
+                          }
+                        };
+                        myFetch();
                         clearState();
                         console.log(siswaBaru);
                       }
@@ -318,8 +411,9 @@ function App() {
                     |{" "}
                     <Button
                       color="danger"
-                      onClick={() => {
+                      onClick= { () => {
                         deleteButton(list.id);
+                        clearState();
                       }}
                     >
                       Hapus
