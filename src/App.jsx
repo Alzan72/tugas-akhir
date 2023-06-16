@@ -14,7 +14,7 @@ import {
 import React, { useEffect, useState } from "react";
 
 import firebase from './firebase.js';
-import { getDatabase, ref, set } from "firebase/database";
+import { getDatabase, ref, set,onValue , remove} from "firebase/database";
 
 
 let siswa = [
@@ -39,7 +39,7 @@ let siswa = [
   //   waktu_kembali: "Senin 2 April 2022",
   //   teman_pulang: 'Orang tua',
   //   button: "",
-  // },
+  // },                   
   // {
   //   id: "32",
   //   nama: "Tegar",
@@ -84,18 +84,11 @@ function App() {
   }
 
    let deleteButton = async (data) => {
-    let url =
-      "https://data-barang-d4966-default-rtdb.asia-southeast1.firebasedatabase.app/siswa/"+ data +".json";
+   const db = getDatabase();
+   remove(ref(db, "siswa/" + data), {
+   });
      try {
-       let response = await fetch(url,{
-        method: 'DELETE'
-       });
-       //   alert("Data berhasil dikirim");
-       if (!response.ok) {
-         throw new Error(response.status);
-       }
-       let responseData = await response.json();
-       console.log(responseData);
+         alert("Data berhasil dihapus");  
      } catch (error) {
        console.log(`Terjadigangguandenganpesan:"${error}"`);
      }
@@ -131,27 +124,28 @@ const [siswa, setSiswa] = useState([]);
       "https://data-barang-d4966-default-rtdb.asia-southeast1.firebasedatabase.app/siswa.json";
     const read = async () => {
       try {
-        let response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(response.status);
-        }
-        let responseData = await response.json()
-        let newSiswa = [];
-        for (let key in responseData) {
-          newSiswa.push({
-            id: key,
-            nama: responseData[key].nama,
-            alamat: responseData[key].alamat,
-            teman_pulang: responseData[key].teman_pulang,
-            alasan: responseData[key].alasan,
-            waktu_pulang: responseData[key].waktu_pulang,
-            waktu_kembali: responseData[key].waktu_kembali,
-            jk: responseData[key].jk,
-            button: "",
-          });
-        }
-        setSiswa(newSiswa);
-        console.log(siswa);
+        const db = getDatabase();
+        const starCountRef = ref(db, "siswa/");
+        onValue(starCountRef, (snapshot) => {
+          const data = snapshot.val();
+          // updateStarCount(postElement, data);
+           let newSiswa = [];
+           for (let key in data) {
+             newSiswa.push({
+               id: key,
+               nama: data[key].nama,
+               alamat: data[key].alamat,
+               teman_pulang: data[key].teman_pulang,
+               alasan: data[key].alasan,
+               waktu_pulang: data[key].waktu_pulang,
+               waktu_kembali: data[key].waktu_kembali,
+               jk: data[key].jk,
+               button: "",
+             });
+           }
+           setSiswa(newSiswa);
+           console.log(siswa);
+        });
       } catch (error) {
         console.log(`Terjadi gangguan dengan pesan: "${error}"`);
       }
