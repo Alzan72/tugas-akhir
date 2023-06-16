@@ -421,7 +421,5 @@ const [siswa, setSiswa] = useState([]);
       </div>
     </>
   );
-
 }
-
 export default App;
